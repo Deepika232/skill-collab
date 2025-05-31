@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Chat with {% if user == swap.from_user %}{{ swap.to_user.username }}{% else %}{{ swap.from_user.username }}{% endif %}</h2>
+    {% if session %}
+        <div class="alert alert-success">
+            <strong>Session Scheduled:</strong> {{ session.scheduled_datetime|date:"Y-m-d H:i" }}
+            {% if session.meeting_link %}<br><strong>Meeting Link:</strong> <a href="{{ session.meeting_link }}" target="_blank">{{ session.meeting_link }}</a>{% endif %}
+
+            {% if not session.is_completed %}
+                <div class="mt-3">
+                    <strong>Confirm Session Completion:</strong><br>
+                    {% if user == swap.from_user %}
+                        {% if not session.from_user_confirmed_completion %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="confirm_completion" class="btn btn-success btn-sm">I Confirm Session Completion</button>
+                            </form>
+                        {% else %}
+                            <span class="badge bg-success">You have confirmed completion.</span>
+                        {% endif %}
+                        {% if session.to_user_confirmed_completion %}
+                             <span class="badge bg-success">{{ swap.to_user.username }} has confirmed completion.</span>
+                        {% else %}
+                             <span class="badge bg-warning">Waiting for {{ swap.to_user.username }} to confirm completion.</span>
+                        {% endif %}
+                    {% else %}{# user == swap.to_user #}
+                        {% if not session.to_user_confirmed_completion %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="confirm_completion" class="btn btn-success btn-sm">I Confirm Session Completion</button>
+                            </form>
+                        {% else %}
+                            <span class="badge bg-success">You have confirmed completion.</span>
+                        {% endif %}
+                         {% if session.from_user_confirmed_completion %}
+                             <span class="badge bg-success">{{ swap.from_user.username }} has confirmed completion.</span>
+                        {% else %}
+                             <span class="badge bg-warning">Waiting for {{ swap.from_user.username }} to confirm completion.</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <a href="{% url 'swaps:edit_session' session.id %}" class="btn btn-secondary btn-sm mt-2">Edit Session</a>
+                <form method="post" action="{% url 'swaps:cancel_session' session.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this session?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm mt-2">Cancel Session</button>
+                </form>
+            {% else %}
+                 <div class="mt-3">
+                    <span class="badge bg-success">Session Completed</span>
+                 </div>
+            {% endif %}
+        </div>
+        {% if session.is_completed %}
+            {% if can_rate %}
+                <div class="alert alert-info">
+                    <strong>Session completed! Leave a rating:</strong>
+                </div>
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label for="rating">Rating:</label>
+                        <select name="rating" id="rating" class="form-select" required>
+                            <option value="">Select</option>
+                            {% for i in "12345" %}
+                                <option value="{{ i }}">{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success">Submit Rating</button>
+                </form>
+            {% endif %}
+            <div class="alert alert-info">
+                <strong>Session Ratings:</strong><br>
+                {% if user_rating %}
+                    Your Rating: {{ user_rating.rating }}/5<br>
+                {% endif %}
+                {% if other_user_rating %}
+                    {% if user == swap.from_user %}
+                        {{ swap.to_user.username }}'s Rating: {{ other_user_rating.rating }}/5
+                    {% else %}
+                        {{ swap.from_user.username }}'s Rating: {{ other_user_rating.rating }}/5
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            <strong>No session scheduled yet.</strong>
+        </div>
+        <form method="post" class="mb-3">
+            {% csrf_token %}
+            <div class="input-group mb-2">
+                <input type="datetime-local" name="scheduled_datetime" class="form-control" required>
+            </div>
+            <div class="input-group mb-2">
+                <input type="url" name="meeting_link" class="form-control" placeholder="Meeting Link (optional)">
+            </div>
+            <button type="submit" class="btn btn-success">Schedule Session</button>
+        </form>
+    {% endif %}
+    <div class="card mb-3" style="max-height: 400px; overflow-y: auto;">
+        <div class="card-body">
+            {% for msg in messages %}
+                <div class="mb-2">
+                    <strong>{{ msg.sender.username }}:</strong> {{ msg.message|urlize }}<br>
+                    <small class="text-muted">{{ msg.timestamp|date:"Y-m-d H:i" }}</small>
+                </div>
+            {% empty %}
+                <p>No messages yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="input-group">
+            <input type="text" name="message" class="form-control" placeholder="Type your message..." required>
+            <button class="btn btn-primary" type="submit">Send</button>
+        </div>
+    </form>
+</div>
+{% endblock %} 

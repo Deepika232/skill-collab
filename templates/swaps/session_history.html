@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Session History</h2>
+
+    {% if sessions %}
+        <ul class="list-group">
+            {% for session in sessions %}
+                <li class="list-group-item">
+                    <strong>Swap:</strong> {{ session.swap_request.offered_skill.name }} for {{ session.swap_request.requested_skill.name }}<br>
+                    <strong>Date:</strong> {{ session.scheduled_datetime|date:"Y-m-d H:i" }}<br>
+                    <strong>Partner:</strong> {% if user == session.swap_request.from_user %}{{ session.swap_request.to_user.username }}{% else %}{{ session.swap_request.from_user.username }}{% endif %}<br>
+                    <a href="{% url 'swaps:chat' swap_id=session.swap_request.id %}" class="btn btn-sm btn-info mt-2">View Session Details and Ratings</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no completed sessions yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

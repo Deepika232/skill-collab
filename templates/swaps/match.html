@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Mutual Matches</h2>
+    {% if mutual_matches %}
+        <ul class="list-group">
+            {% for profile in mutual_matches %}
+                <li class="list-group-item">
+                    <h5>{{ profile.user.get_full_name|default:profile.user.username }}</h5>
+                    <p><strong>Can Teach:</strong> {{ profile.teach_skills.all|join:', ' }}</p>
+                    <p><strong>Wants to Learn:</strong> {{ profile.learn_skills.all|join:', ' }}</p>
+                    <form method="post" action="{% url 'swaps:send_swap_request' profile.user.id %}">
+                        {% csrf_token %}
+                        <div class="row mb-2">
+                            <div class="col">
+                                <label>Skill you offer:</label>
+                                <select name="offered_skill" class="form-select" required>
+                                    {% for skill in teach_skills %}
+                                        {% if skill in profile.learn_skills.all %}
+                                            <option value="{{ skill.id }}">{{ skill.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label>Skill you want:</label>
+                                <select name="requested_skill" class="form-select" required>
+                                    {% for skill in learn_skills %}
+                                        {% if skill in profile.teach_skills.all %}
+                                            <option value="{{ skill.id }}">{{ skill.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send Swap Request</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No mutual matches found at this time.</p>
+    {% endif %}
+</div>
+{% endblock %} 

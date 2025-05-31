@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Upcoming Sessions</h2>
+
+    {% if sessions %}
+        <ul class="list-group">
+            {% for session in sessions %}
+                <li class="list-group-item">
+                    <strong>Swap Request:</strong> {{ session.swap_request }}<br>
+                    <strong>Scheduled Time:</strong> {{ session.scheduled_datetime|date:"Y-m-d H:i" }}<br>
+                    {% if session.meeting_link %}
+                        <strong>Meeting Link:</strong> <a href="{{ session.meeting_link }}" target="_blank">{{ session.meeting_link }}</a><br>
+                    {% endif %}
+                    {# You might want to add links to the chat for each session here #}
+                    <a href="{% url 'swaps:chat' swap_id=session.swap_request.id %}" class="btn btn-sm btn-info mt-2">Go to Chat</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no upcoming sessions.</p>
+    {% endif %}
+</div>
+{% endblock %} 
